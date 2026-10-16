@@ -89,6 +89,7 @@ resource "aws_cloudfront_distribution" "web" {
   #checkov:skip=CKV2_AWS_42:No custom domain or ACM certificate is configured in P1-01.
   #checkov:skip=CKV2_AWS_47:WAF is not attached; see CKV_AWS_68 rationale.
   #checkov:skip=CKV2_AWS_72:S3 REST origins use HTTPS with OAC and have no custom-origin protocol policy.
+  #checkov:skip=CKV2_AWS_32:The AWS-managed SecurityHeadersPolicy is attached by ID; Checkov does not resolve managed IDs.
   enabled             = true
   default_root_object = "index.html"
   price_class         = "PriceClass_100"

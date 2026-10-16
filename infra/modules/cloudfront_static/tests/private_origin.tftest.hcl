@@ -1,4 +1,10 @@
-mock_provider "aws" {}
+mock_provider "aws" {
+  mock_resource "aws_cloudfront_function" {
+    defaults = {
+      arn = "arn:aws:cloudfront::123456789012:function/cic-dev-static-routes"
+    }
+  }
+}
 
 variables {
   environment = "dev"
