@@ -14,10 +14,12 @@ other regions until a new reviewed decision. This changes no existing AWS resour
 `infra/environments/dev/core` optionally provisions a private S3 bucket and a
 CloudFront distribution using Origin Access Control. The bucket blocks all public
 access, enforces TLS and SSE-S3, and cannot delete uploaded objects during destroy.
+It versions assets and expires noncurrent versions after 30 days; incomplete uploads
+expire after seven days.
 CloudFront redirects viewers to HTTPS and rewrites trailing-slash paths to the
 Next.js static export's `index.html`. The distribution uses the default CloudFront
-certificate and `PriceClass_100`; no custom domain, DNS, or asset upload is
-configured.
+certificate, AWS's managed security headers policy, and `PriceClass_100`; no
+custom domain, DNS, or asset upload is configured.
 
 `create_core` remains `false` by default. To prepare a plan, set it to `true` only
 in an ignored `terraform.tfvars`, set a named `owner_tag`, and review the exact
@@ -25,6 +27,11 @@ S3, CloudFront, and function resources and regional pricing before apply. The
 module outputs `web_bucket_name` and `web_distribution_domain_name`. This PR does
 not apply the plan or verify a live HTTPS response; the bucket is empty until a
 static export is uploaded.
+
+The static-site Checkov exceptions are limited to optional failover, geo-restriction,
+WAF, custom certificate, logging, cross-region replication, KMS, and event
+notifications. Each is either absent from the product requirements or requires a
+separate cost, retention, or domain decision; review them before production use.
 
 ## Offline checks
 

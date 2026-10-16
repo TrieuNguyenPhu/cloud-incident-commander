@@ -1,4 +1,8 @@
 resource "aws_s3_bucket" "web" {
+  #checkov:skip=CKV_AWS_18:Access-log destination and retention require a separate privacy and cost review.
+  #checkov:skip=CKV_AWS_144:This dev frontend is single-region by ADR-018; replication adds cost and a second stateful bucket.
+  #checkov:skip=CKV_AWS_145:ADR-001 allows SSE-S3; KMS key lifecycle and cost need a separate decision.
+  #checkov:skip=CKV2_AWS_62:Static assets have no event-driven consumer.
   bucket_prefix = "cic-${var.environment}-web-"
   force_destroy = false
   tags          = var.tags
@@ -28,6 +32,32 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "web" {
   }
 }
 
+resource "aws_s3_bucket_versioning" "web" {
+  bucket = aws_s3_bucket.web.id
+  versioning_configuration {
+    status = "Enabled"
+  }
+}
+
+resource "aws_s3_bucket_lifecycle_configuration" "web" {
+  bucket = aws_s3_bucket.web.id
+
+  rule {
+    id     = "bound-static-asset-retention"
+    status = "Enabled"
+
+    filter {}
+
+    abort_incomplete_multipart_upload {
+      days_after_initiation = 7
+    }
+
+    noncurrent_version_expiration {
+      noncurrent_days = 30
+    }
+  }
+}
+
 resource "aws_cloudfront_origin_access_control" "web" {
   name                              = "cic-${var.environment}-web"
   description                       = "Private S3 origin for the CIC static web export"
@@ -51,6 +81,14 @@ resource "aws_cloudfront_function" "static_routes" {
 }
 
 resource "aws_cloudfront_distribution" "web" {
+  #checkov:skip=CKV_AWS_174:Default CloudFront certificate is configured for TLSv1.2_2021 below.
+  #checkov:skip=CKV_AWS_310:One private S3 origin is sufficient for this dev static site; no failover origin is provisioned.
+  #checkov:skip=CKV_AWS_374:The product has no geographic access restriction requirement.
+  #checkov:skip=CKV_AWS_68:WAF is outside P1-01 and adds ongoing cost; review before exposing authenticated workflows.
+  #checkov:skip=CKV_AWS_86:Access-log destination and retention require a separate privacy and cost review.
+  #checkov:skip=CKV2_AWS_42:No custom domain or ACM certificate is configured in P1-01.
+  #checkov:skip=CKV2_AWS_47:WAF is not attached; see CKV_AWS_68 rationale.
+  #checkov:skip=CKV2_AWS_72:S3 REST origins use HTTPS with OAC and have no custom-origin protocol policy.
   enabled             = true
   default_root_object = "index.html"
   price_class         = "PriceClass_100"
@@ -63,12 +101,13 @@ resource "aws_cloudfront_distribution" "web" {
   }
 
   default_cache_behavior {
-    target_origin_id       = "private-s3-web"
-    viewer_protocol_policy = "redirect-to-https"
-    allowed_methods        = ["GET", "HEAD"]
-    cached_methods         = ["GET", "HEAD"]
-    compress               = true
-    cache_policy_id        = "658327ea-f89d-4fab-a63d-7e88639e58f6"
+    target_origin_id           = "private-s3-web"
+    viewer_protocol_policy     = "redirect-to-https"
+    allowed_methods            = ["GET", "HEAD"]
+    cached_methods             = ["GET", "HEAD"]
+    compress                   = true
+    cache_policy_id            = "658327ea-f89d-4fab-a63d-7e88639e58f6"
+    response_headers_policy_id = "67f7725c-6f97-4210-82d7-5512b31e9d03"
 
     function_association {
       event_type   = "viewer-request"

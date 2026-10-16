@@ -12,8 +12,8 @@ run "disabled_by_default" {
   }
 }
 
-run "web_stack_is_opt_in" {
-  command = plan
+run "web_stack_mock_apply" {
+  command = apply
   variables {
     owner_tag   = "test-owner"
     create_core = true

@@ -11,8 +11,8 @@ variables {
   }
 }
 
-run "private_static_site_plan" {
-  command = plan
+run "private_static_site_mock_apply" {
+  command = apply
 
   assert {
     condition     = aws_s3_bucket.web.force_destroy == false
@@ -23,7 +23,7 @@ run "private_static_site_plan" {
     error_message = "The static asset bucket must block all public access."
   }
   assert {
-    condition     = aws_cloudfront_distribution.web.origin[0].origin_access_control_id == aws_cloudfront_origin_access_control.web.id
+    condition     = length([for origin in aws_cloudfront_distribution.web.origin : origin if origin.origin_access_control_id == aws_cloudfront_origin_access_control.web.id]) == 1
     error_message = "CloudFront must access S3 through OAC."
   }
   assert {
