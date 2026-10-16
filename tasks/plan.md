@@ -2,6 +2,10 @@
 
 **Ngày:** 2026-10-16 · **Trạng thái:** đề xuất để thực hiện theo từng PR nhỏ.
 
+**Phạm vi cloud:** phát triển và demo trên máy local trước; khi triển khai cloud,
+AWS là nền tảng đích. Không triển khai trên GCP hoặc Azure. Chạy local không cần
+kết nối hay tài khoản AWS.
+
 ## Mục tiêu và phạm vi
 
 "Tính năng quan trọng" là luồng UC-001/P0–P4: xem tài nguyên và bản triển khai,

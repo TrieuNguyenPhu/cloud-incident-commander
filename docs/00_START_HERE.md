@@ -1,6 +1,6 @@
 # Cloud Incident Commander — Complete Implementation Specification v1.1
 
-**Date:** 2026-10-15 · **Scope:** AWS-only deployment · **State:** SPECIFICATION COMPLETE FOR P0 START, NOT IMPLEMENTED.
+**Date:** 2026-10-15 · **Cloud target:** AWS (GCP/Azure out of scope) · **State:** SPECIFICATION COMPLETE FOR P0 START, NOT IMPLEMENTED.
 
 **2026-10-16 amendment:** ADR-018 supersedes ADR-016's region default. The active MVP region is `us-east-1`.
 
@@ -37,7 +37,7 @@ CIC is an AI-assisted incident operations platform: detect real AWS deployment f
 
 ## Final hard decisions
 
-- AWS only; default region `us-east-1` for MVP subject to checking every required service/model in actual account. Frontend Next.js+TypeScript static export on S3/CloudFront, backend Python/FastAPI Lambda; Cognito, DynamoDB and S3 as primary.
+- AWS is the cloud deployment target; default region `us-east-1` for MVP subject to checking every required service/model in actual account. Frontend Next.js+TypeScript static export on S3/CloudFront, backend Python/FastAPI Lambda; Cognito, DynamoDB and S3 as primary. Local development runs on the developer's machine and does not require AWS credentials.
 - GitHub Actions primary CI/CD via AWS OIDC, deployment events published to EventBridge custom **Classic** bus in P1. EKS, OpenShift/ROSA, Nomad, Jenkins, Jenkins X, GitLab CI/CD, Bitbucket, GitLab SCM, Prometheus/Grafana/ELK, Packer/Ansible/RHEL as real opt-in AWS-hosted integration labs P5..P7.
 - P1 ECS demo is a public-subnet Fargate **task** with outbound internet/public IPv4, no inbound SG, no NAT, no ALB. In-task loopback HTTP load tester + structured JSON access logs → CloudWatch Logs metric filter 5xx → alarm → default EventBridge bus → custom bus → SQS in P2.
 - Bedrock AI is read-only advisory. Only initial action is `ecs.rollback_task_definition`, approved by separate human with scoped IAM, conditional workflow state, best-effort ECS drift guard and verification.
