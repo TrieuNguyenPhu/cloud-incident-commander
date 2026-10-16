@@ -1,11 +1,37 @@
-# P0 infrastructure setup
+# Infrastructure setup
 
-P0 validates configuration and mocked plans only. No account resources have been
-created. `bootstrap` defaults to `provision_bootstrap=false`; all six environment
-flags default to `false` and reject enablement until their owning phase implements
-real resources. See [module ownership](modules/README.md).
+P0 validated configuration and mocked plans; it created no account resources.
+`bootstrap` defaults to `provision_bootstrap=false`, and all six environment flags
+default to `false`. The dev core now includes the P1-01 static web hosting module;
+all other unfinished phases still fail closed. No AWS resources are created by
+this repository until an operator applies an approved plan. See
+[module ownership](modules/README.md).
 ADR-018 sets `us-east-1` as the active region; the Terraform guardrails reject
 other regions until a new reviewed decision. This changes no existing AWS resource.
+
+## P1-01 static web hosting
+
+`infra/environments/dev/core` optionally provisions a private S3 bucket and a
+CloudFront distribution using Origin Access Control. The bucket blocks all public
+access, enforces TLS and SSE-S3, and cannot delete uploaded objects during destroy.
+It versions assets and expires noncurrent versions after 30 days; incomplete uploads
+expire after seven days.
+CloudFront redirects viewers to HTTPS and rewrites trailing-slash paths to the
+Next.js static export's `index.html`. The distribution uses the default CloudFront
+certificate, AWS's managed security headers policy, and `PriceClass_100`; no
+custom domain, DNS, or asset upload is configured.
+
+`create_core` remains `false` by default. To prepare a plan, set it to `true` only
+in an ignored `terraform.tfvars`, set a named `owner_tag`, and review the exact
+S3, CloudFront, and function resources and regional pricing before apply. The
+module outputs `web_bucket_name` and `web_distribution_domain_name`. This PR does
+not apply the plan or verify a live HTTPS response; the bucket is empty until a
+static export is uploaded.
+
+The static-site Checkov exceptions are limited to optional failover, geo-restriction,
+WAF, custom certificate, logging, cross-region replication, KMS, and event
+notifications. Each is either absent from the product requirements or requires a
+separate cost, retention, or domain decision; review them before production use.
 
 ## Offline checks
 

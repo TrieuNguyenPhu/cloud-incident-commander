@@ -6,6 +6,7 @@ import { spawnSync } from "node:child_process";
 const root = resolve(import.meta.dirname, "..");
 const roots = [
   "infra/bootstrap",
+  "infra/modules/cloudfront_static",
   "infra/modules/state_backend",
   "infra/modules/environment_guardrails",
   ...readdirSync(resolve(root, "infra/environments"), { withFileTypes: true })

@@ -6,10 +6,6 @@ variable "aws_region" {
 variable "create_core" {
   type    = bool
   default = false
-  validation {
-    condition     = !var.create_core
-    error_message = "P1 resources are not implemented in P0. Keep this flag false until that phase is reviewed."
-  }
 }
 
 variable "owner_tag" {
@@ -28,4 +24,19 @@ module "guardrails" {
 
 output "planned_tags" {
   value = module.guardrails.tags
+}
+
+module "web" {
+  count       = var.create_core ? 1 : 0
+  source      = "../../../modules/cloudfront_static"
+  environment = "dev"
+  tags        = module.guardrails.tags
+}
+
+output "web_bucket_name" {
+  value = try(module.web[0].bucket_name, null)
+}
+
+output "web_distribution_domain_name" {
+  value = try(module.web[0].distribution_domain_name, null)
 }

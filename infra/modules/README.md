@@ -3,14 +3,14 @@
 P0 implements `state_backend` (isolated bootstrap bucket and budget) and
 `environment_guardrails` (mandatory owner/tags and bounded lab expiry).
 
-The topology below is reserved for the owning backlog story. Environment flags
-currently reject `true`, so an empty skeleton cannot be mistaken for a deployed
-integration. Create each module when implementing its story; no AWS resource is
+The topology below is reserved for the owning backlog story. The P1-01 static web
+module is implemented and included in dev core behind the default-off
+`create_core` flag. Other incomplete phases still fail closed; no AWS resource is
 implicitly instantiated by a directory or README.
 
 | Module | First story |
 | --- | --- |
-| cloudfront_static | P1-01 |
+| cloudfront_static | P1-01 (implemented; CloudFront + private S3 OAC) |
 | cognito | P1-02 |
 | api_gateway_lambda | P1-04 |
 | dynamodb_core | P1-03 |
