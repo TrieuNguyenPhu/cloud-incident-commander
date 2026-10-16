@@ -124,27 +124,44 @@ trong local. P2-08 vẫn chờ alarm/EventBridge/SQS thật và đo thời gian 
 **Checkpoint 3:** đi được từ incident → evidence → phân tích → phê duyệt trên
 local; không có đường gọi Bedrock/Step Functions/ECS thật.
 
-### L10 — Rollback giả lập và xác minh
+### L10 — Preflight và rollback giả lập
 
-- **Phụ thuộc:** L09. **Backlog:** logic local của P4-04/P4-05/P4-06.
+- **Phụ thuộc:** L09. **Backlog:** logic local của P4-04/P4-05.
 - **Làm:** preflight so expected/current revision và allowlist, resource lease,
-  executor dùng ECS client giả lập; ghi VERIFIED/FAILED/UNKNOWN.
+  executor dùng ECS client giả lập.
 - **Đạt khi:** drift hoặc từ chối phê duyệt không gọi UpdateService; retry không
-  chạy hai lần; thiếu telemetry là UNKNOWN. **Kiểm tra:** spy client, drift,
-  duplicate và ba trạng thái. **Vùng code:** `services/api/`, `tests/`. **Cỡ:** M.
+  chạy hai lần. **Kiểm tra:** spy client, drift và duplicate.
+- **Vùng code:** `services/api/`, `tests/`. **Cỡ:** M.
 
-### L11 — Audit và postmortem
+### L11 — Xác minh sau rollback giả lập
 
-- **Phụ thuộc:** L04, L06–L10. **Backlog:** logic local của P4-07/P4-08.
-- **Làm:** admin xem/export audit theo quyền; tạo bản nháp Markdown từ timeline,
-  evidence và kết quả action, chỉnh sửa được.
-- **Đạt khi:** Viewer không đọc audit; export có digest; postmortem nói rõ RCA
-  chưa chắc chắn. **Kiểm tra:** quyền, digest và bản nháp từ incident seed.
+- **Phụ thuộc:** L10. **Backlog:** logic local của P4-06.
+- **Làm:** đối chiếu revision và telemetry giả lập sau action; ghi rõ
+  VERIFIED/FAILED/UNKNOWN vào action timeline.
+- **Đạt khi:** revision đúng và alarm OK mới VERIFIED; alarm xấu là FAILED;
+  thiếu telemetry là UNKNOWN. **Kiểm tra:** ba trạng thái và timeout.
+- **Vùng code:** `services/api/`, `tests/`. **Cỡ:** S.
+
+### L12 — Audit theo quyền và export
+
+- **Phụ thuộc:** L04, L09–L11. **Backlog:** logic local của P4-07.
+- **Làm:** Admin xem và export audit cùng digest; đối chiếu outbox đã chuyển.
+- **Đạt khi:** Viewer không đọc audit; export có digest; outbox thiếu không được
+  báo là hoàn tất. **Kiểm tra:** quyền, digest và trường hợp writer lỗi.
 - **Vùng code:** `services/api/`, `apps/web/`, `tests/`. **Cỡ:** M.
 
-### L12 — Demo local hoàn chỉnh
+### L13 — Bản nháp postmortem
 
-- **Phụ thuộc:** L01–L11. **Backlog:** chuẩn bị cho P4-09, chưa nghiệm thu AWS.
+- **Phụ thuộc:** L06–L08, L11–L12. **Backlog:** logic local của P4-08.
+- **Làm:** tạo Markdown từ timeline, evidence và kết quả action; cho phép
+  người dùng chỉnh sửa bản nháp.
+- **Đạt khi:** có link evidence, thời gian và follow-up; RCA chưa chắc chắn
+  được ghi rõ. **Kiểm tra:** bản nháp từ incident seed và quyền Operator.
+- **Vùng code:** `services/api/`, `apps/web/`, `tests/`. **Cỡ:** M.
+
+### L14 — Demo local hoàn chỉnh
+
+- **Phụ thuộc:** L01–L13. **Backlog:** chuẩn bị cho P4-09, chưa nghiệm thu AWS.
 - **Làm:** một lệnh seed và hướng dẫn đi từ deployment lỗi đến postmortem bằng
   hai vai; gắn kết quả kiểm tra vào PR.
 - **Đạt khi:** người mới chạy lại được toàn luồng; các ca duplicate, 401/403,
@@ -152,7 +169,7 @@ local; không có đường gọi Bedrock/Step Functions/ECS thật.
   **Kiểm tra:** chạy theo README local và focused suite. **Vùng code:** `README.md`,
   `scripts/`, `tests/`. **Cỡ:** M.
 
-**Cổng local-ready:** L01–L12 xong, web/API chạy được bằng lệnh trong README, CI
+**Cổng local-ready:** L01–L14 xong, web/API chạy được bằng lệnh trong README, CI
 xanh, demo end-to-end local tái hiện được và mọi thành phần giả lập được ghi rõ.
 
 ## Lên AWS và chuyển sang vòng phát triển–deploy

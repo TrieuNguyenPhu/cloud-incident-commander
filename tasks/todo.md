@@ -18,9 +18,11 @@ bằng chứng AWS.
 - [ ] L08 Phân tích có căn cứ và đề xuất hợp lệ
 - [ ] L09 Yêu cầu và quyết định phê duyệt của hai vai
 - [ ] Checkpoint 3: incident → evidence → phân tích → phê duyệt
-- [ ] L10 Rollback giả lập, drift guard và verification
-- [ ] L11 Audit theo quyền và postmortem chỉnh sửa được
-- [ ] L12 Demo local hoàn chỉnh, hướng dẫn chạy lại và ca âm
+- [ ] L10 Preflight, rollback giả lập và drift guard
+- [ ] L11 Xác minh VERIFIED/FAILED/UNKNOWN sau rollback giả lập
+- [ ] L12 Audit theo quyền, outbox reconciliation và export
+- [ ] L13 Bản nháp postmortem chỉnh sửa được
+- [ ] L14 Demo local hoàn chỉnh, hướng dẫn chạy lại và ca âm
 - [ ] Cổng local-ready: UI/API end-to-end, CI xanh, mock được gắn nhãn rõ
 
 ## AWS rồi phát triển–deploy liên tục
