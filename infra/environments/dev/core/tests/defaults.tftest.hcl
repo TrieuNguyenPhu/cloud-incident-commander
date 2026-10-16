@@ -12,11 +12,14 @@ run "disabled_by_default" {
   }
 }
 
-run "unimplemented_phase_fails_closed" {
+run "web_stack_is_opt_in" {
   command = plan
   variables {
     owner_tag   = "test-owner"
     create_core = true
   }
-  expect_failures = [var.create_core]
+  assert {
+    condition     = output.web_bucket_name != null && output.web_distribution_domain_name != null
+    error_message = "The enabled core stack must expose the private static site."
+  }
 }
