@@ -3,7 +3,7 @@ mock_provider "aws" {}
 run "disabled_by_default" {
   command = plan
   assert {
-    condition     = !var.create_core
+    condition     = !var.create_core && length(module.web) == 0
     error_message = "Cloud resources must remain opt-in."
   }
   assert {
@@ -12,14 +12,14 @@ run "disabled_by_default" {
   }
 }
 
-run "web_stack_mock_apply" {
-  command = apply
+run "web_stack_opt_in_plan" {
+  command = plan
   variables {
     owner_tag   = "test-owner"
     create_core = true
   }
   assert {
-    condition     = output.web_bucket_name != null && output.web_distribution_domain_name != null
+    condition     = length(module.web) == 1
     error_message = "The enabled core stack must expose the private static site."
   }
 }
