@@ -1,0 +1,91 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cic.example/schemas/AIAnalysisReport.schema.json",
+  "title": "AIAnalysisReport",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": "1.1"
+    },
+    "analysis_id": {
+      "type": "string"
+    },
+    "incident_id": {
+      "type": "string"
+    },
+    "status": {
+      "enum": [
+        "COMPLETE",
+        "INCONCLUSIVE",
+        "FAILED"
+      ]
+    },
+    "confidence": {
+      "enum": [
+        "LOW",
+        "MEDIUM",
+        "HIGH"
+      ]
+    },
+    "evidence_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "hypotheses": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "summary": {
+      "type": "string"
+    },
+    "missing_evidence": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "recommended_action": {
+      "anyOf": [
+        {
+          "type": "object",
+          "properties": {
+            "action_type": {
+              "const": "ecs.rollback_task_definition"
+            },
+            "resource_uid": {
+              "type": "string"
+            },
+            "target_revision": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "action_type",
+            "resource_uid",
+            "target_revision"
+          ]
+        },
+        {
+          "type": "null"
+        }
+      ]
+    }
+  },
+  "required": [
+    "schema_version",
+    "analysis_id",
+    "incident_id",
+    "status",
+    "confidence",
+    "evidence_ids",
+    "hypotheses",
+    "summary",
+    "missing_evidence",
+    "recommended_action"
+  ]
+}

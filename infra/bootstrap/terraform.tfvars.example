@@ -1,0 +1,8 @@
+provision_bootstrap = false
+aws_region = "us-east-1"
+aws_account_id = "000000000000"
+state_bucket_name = "REPLACE_WITH_REVIEWED_STATE_BUCKET"
+owner_tag = "REPLACE_WITH_OWNER"
+budget_email = "owner@example.com"
+core_budget_alert_usd = 25
+backend_role_arns = ["arn:aws:iam::000000000000:role/REPLACE_WITH_REVIEWED_BACKEND_ROLE"]

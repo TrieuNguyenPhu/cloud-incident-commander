@@ -1,0 +1,15 @@
+{
+  "schema_version": "1.1",
+  "event_id": "01KB12345678ABCDEFGHJKLMNP",
+  "tenant_id": "default",
+  "source": "aws.cloudwatch",
+  "source_type": "cloudwatch.alarm",
+  "resource_uid": "arn:aws:ecs:us-east-1:111122223333:service/cic-demo/api",
+  "normalized_alert_key": "cic-demo-api-http-5xx",
+  "occurred_at": "2026-10-15T09:00:00Z",
+  "ingested_at": "2026-10-15T09:00:04Z",
+  "correlation_id": "corr-01KB12345678",
+  "payload_ref": "s3://cic-evidence-example/raw/events/evt1.json",
+  "severity": "SEV2",
+  "missing_occurred_at": false
+}

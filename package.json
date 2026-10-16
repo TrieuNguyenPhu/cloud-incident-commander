@@ -1,0 +1,31 @@
+{
+  "name": "cloud-incident-commander",
+  "version": "0.1.0",
+  "private": true,
+  "workspaces": [
+    "apps/web",
+    "packages/contracts"
+  ],
+  "engines": {
+    "node": ">=24 <25",
+    "npm": ">=11 <12"
+  },
+  "packageManager": "npm@11.13.0",
+  "scripts": {
+    "dev": "npm run dev --workspace @cic/web",
+    "dev:api": "uv run uvicorn cic_api.main:app --reload --host 127.0.0.1 --port 8000 --env-file services/api/.env",
+    "build": "npm run build --workspace @cic/web",
+    "lint": "npm run lint --workspace @cic/web",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "contracts:generate": "uv run python scripts/generate_contracts.py",
+    "contracts:check": "uv run python scripts/generate_contracts.py --check",
+    "test": "uv run pytest",
+    "check": "npm run format:check && npm run lint && npm run typecheck && uv run ruff check . && uv run ruff format --check . && uv run mypy && npm run contracts:check && npm test && npm run build"
+  },
+  "devDependencies": {
+    "openapi-typescript": "7.13.0",
+    "prettier": "3.9.10"
+  }
+}

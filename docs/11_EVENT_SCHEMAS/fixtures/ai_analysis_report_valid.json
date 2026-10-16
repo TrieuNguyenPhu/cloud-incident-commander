@@ -1,0 +1,18 @@
+{
+  "schema_version": "1.1",
+  "analysis_id": "11111111-2222-4333-8444-555555555555",
+  "incident_id": "aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee",
+  "status": "COMPLETE",
+  "confidence": "MEDIUM",
+  "evidence_ids": ["evidence-0001", "evidence-0002"],
+  "summary": "A rollout may have increased HTTP 5xx",
+  "hypotheses": [
+    "The new task definition introduced HTTP errors"
+  ],
+  "missing_evidence": [],
+  "recommended_action": {
+    "action_type": "ecs.rollback_task_definition",
+    "resource_uid": "arn:aws:ecs:us-east-1:111122223333:service/cic-demo/api",
+    "target_revision": "arn:aws:ecs:us-east-1:111122223333:task-definition/cic-demo:7"
+  }
+}

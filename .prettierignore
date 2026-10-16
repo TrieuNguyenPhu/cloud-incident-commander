@@ -1,0 +1,12 @@
+docs/
+infra/
+uv.lock
+package-lock.json
+packages/contracts/src/cic_contracts/generated/
+packages/contracts/types/api.d.ts
+node_modules/
+.venv/
+.tools/
+artifacts/
+**/.next/
+**/out/

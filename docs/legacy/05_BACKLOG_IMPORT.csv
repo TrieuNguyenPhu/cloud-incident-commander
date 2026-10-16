@@ -1,0 +1,65 @@
+﻿Issue ID,Phase,Epic,Priority,Title,Depends On,Story Points,Acceptance Criteria
+P0-01,P0,Product,Must,"Baseline SRS/architecture/DB, FR/NFR & ADR",,3,Tài liệu version 1.0; requirement traceability; scope AWS-only; review security/cost
+P0-02,P0,Engineering,Must,Khởi tạo monorepo Next.js/FastAPI/Python packages,P0-01,3,npm/pnpm + uv lockfiles; typed lint/format; dev chạy từ README
+P0-03,P0,Engineering,Must,"Pydantic contracts, OpenAPI v1 & JSON schema events",P0-02,3,"SignalEvent, DeploymentEvent, Incident, Action schemas; roundtrip contract tests"
+P0-04,P0,Security,Must,"Define roles, trust boundaries & threat model",P0-01,3,Viewer/Operator/Approver/Admin policy matrix + abuse cases + no AI AWS access
+P0-05,P0,Cost,Must,"Terraform state isolation, AWS Budget & tagging",P0-01,5,Separate core/lab state; budget alert; mandatory tags and TTL; destroy instructions
+P0-06,P0,Quality,Must,CI checks GitHub Actions (no AWS static key),P0-02,3,PR lint/typecheck/test/secret scan; protected branch; AWS OIDC trust restricted
+P1-01,P1,Infrastructure,Must,Terraform CloudFront + private S3 + OAC,P0-05,5,"Next.js export loads via CloudFront HTTPS, S3 BlockPublicAccess, no public S3 origin"
+P1-02,P1,Identity,Must,Cognito Hosted UI + PKCE + RBAC backend,"P0-04,P1-01",5,"Sign-in/out, no tokens in logs; 401/403 tests, MFA for approver/admin where configured"
+P1-03,P1,Data,Must,Terraform DynamoDB core/dedupe/audit + indices,"P0-03,P0-05",5,PK/SK/GSI definitions & PITR config; integration test against AWS or DynamoDB Local
+P1-04,P1,API,Must,Deploy FastAPI/Mangum HTTP API Lambda,"P1-02,P1-03",5,"GET /healthz, protected /v1/resources; proper CORS, trace IDs, logs 14d"
+P1-05,P1,Workload,Must,Docker sample API + ECR + ECS Fargate,"P0-06,P0-05",5,Pinned digest release; configurable healthy/faulty mode; safe lab rollback revision
+P1-06,P1,CI/CD,Must,Build/test/scan/deploy demo with GitHub Actions OIDC,P1-05,5,"Trivy scan, SHA/digest, approvals protected env; publish DeploymentEvent"
+P1-07,P1,Frontend,Must,Web layout / login / resources / deployment history,"P1-01,P1-02,P1-04",5,Authenticated shell responsive; loading/error states; resource list real data
+P1-08,P1,Observability,Must,CloudWatch basic alarms + app logs + cost dashboard,"P1-04,P1-05",3,ECS/API error metrics+retention+alarms; no costly NAT by default
+P2-01,P2,Events,Must,EventBridge bus + SQS + DLQ + Lambda consumer,"P1-03,P1-08",5,"Filtered alarm → queue, retries, DLQ, replay runbook"
+P2-02,P2,Events,Must,Normalize AWS alarm & deployment events,"P0-03,P2-01",5,"Schema version, timestamps, IDs, resource UID, sample fixtures"
+P2-03,P2,Data,Must,Idempotent dedupe + fingerprint/incident correlation,P2-02,8,Five duplicate deliveries → one incident; race/out-of-order tests; transactions
+P2-04,P2,Domain,Must,"Incident state machine, severity & timeline",P2-03,5,"Transition validation, RBAC, optimistic version, append timeline"
+P2-05,P2,Evidence,Must,Bounded CloudWatch/ECS evidence collector,P2-03,8,"Read-only IAM, constrained time/size, redaction, partial failures"
+P2-06,P2,Data,Must,Evidence manifest S3 + metadata digest in DynamoDB,P2-05,3,"Private encryption, SHA-256, presigned retrieval RBAC"
+P2-07,P2,Frontend,Must,Incident dashboard/list/detail + timeline/evidence tabs,"P2-04,P2-06",5,"Pagination without Scan, filter status/severity, no leaked private objects"
+P2-08,P2,Test,Must,Integration scenario alarm → incident → evidence,"P2-01,P2-07",5,CloudWatch injected demo alarm; incident correct resource and commit SHA < 120s after bus
+P3-01,P3,AI,Must,"Bedrock model config, IAM, budget/token guardrails",P2-06,3,"Selected region/model access, cost limits, sanitized evidence"
+P3-02,P3,AI,Must,"Evidence curation, redaction and prompt schema",P3-01,5,"Untrusted logs treated data, bounded context, prompt-injection test"
+P3-03,P3,AI,Must,Bedrock investigator async + JSON schema validation,P3-02,5,RCA with existing evidence IDs; confidence labels; status COMPLETE/INCONCLUSIVE
+P3-04,P3,Domain,Must,Runbook catalog and deterministic validator,P3-03,5,Only ecs.rollback_task_definition accepted; no arbitrary command
+P3-05,P3,Frontend,Must,AI analysis UI with supporting evidence and risk,P3-03,3,Citations are clickable evidence refs; status/uncertainty visible
+P3-06,P3,Test,Must,AI evaluation: fabricated evidence / unsafe action tests,"P3-04,P3-05",5,Hallucination refs rejected; prompt injection cannot trigger action
+P4-01,P4,Safety,Must,"Approval policy (RBAC, resource allowlist, separation of duty)",P3-04,5,"Requester!=approver, expiry, resource action scope; negative tests"
+P4-02,P4,Workflow,Must,Step Functions Standard approval callback workflow,P4-01,8,"Encrypted task token server only, timeout and reject safe"
+P4-03,P4,Workflow,Must,Approval endpoints and pending approval UI,P4-02,5,"Duplicate decision idempotent, stale version 409, audit recorded"
+P4-04,P4,Safety,Must,Remediation resource lock/idempotency + preflight,P4-02,8,"Read latest ECS revision and compare snapshot; blocked on drift, deny by default"
+P4-05,P4,Remediation,Must,Restricted ecs.rollback_task_definition executor,P4-04,5,Approved historical revision only; IAM scoped exact service ARN
+P4-06,P4,Verification,Must,ECS stabilization + alarm steady-state verification,P4-05,5,"5m verification window, VERIFIED/FAILED/UNKNOWN incl missing metric"
+P4-07,P4,Audit,Must,DynamoDB append-only audit + state/action timeline,"P4-03,P4-06",5,"Every mutation actor/outcome/trace, writer cannot update/delete"
+P4-08,P4,Reporting,Must,Generate editable postmortem from timeline/evidence,P4-07,3,"Export Markdown, root-cause uncertainty and follow-ups"
+P4-09,P4,Test,Must,Complete bad-release UAT incl no-self-approval/drift,P4-08,8,UAT-01..10 pass; intentionally injected drift prevents action; cleanup tested
+P5-01,P5,Observability,Should,Add Prometheus exporters and scrape config for lab,P4-09,5,"Demo metric observable with labels/resource UID, retention cap"
+P5-02,P5,Observability,Should,Grafana dashboards correlated with incident IDs,P5-01,3,"Dashboard panels linked from incident, access controlled"
+P5-03,P5,Observability,Should,"ELK on AWS EC2/Docker: Elasticsearch, Logstash, Kibana","P4-09,P0-05",8,"Real workload logs indexed and queryable, secure endpoint, lifecycle cleanup"
+P5-04,P5,Security,Should,GuardDuty high severity finding and CloudTrail event adapters,"P2-02,P4-09",5,"Typed security signal, no auto mutation; filters reduce noise and cost"
+P5-05,P5,Data,Should,DynamoDB/S3 export to Parquet + Glue/Athena,P4-09,5,"Daily partition export, schema and count reconciliation"
+P5-06,P5,Analytics,Should,MTTD/MTTA/MTTR dashboard with stated denominator,P5-05,3,"Query measured facts, null excluded, freshness label"
+P5-07,P5,Notifications,Should,SNS/email incident & approval notification,P4-03,3,"No secret/token email, subscription choices, anti-spam"
+P5-08,P5,Security,Should,Trivy + Checkov gate and secrets/config review,"P0-06,P4-09",3,Critical results fail pipeline with documented exception policy
+P5-09,P5,Reliability,Should,"DLQ replay, backup/restore drill, threat-model revisit","P5-04,P5-05",5,"Restore evidence/accounting, replay is idempotent, RPO/RTO measured"
+P6-01,P6,EKS,Should,Terraform EKS opt-in + cluster cleanup/cost gates,P5-09,8,"On-demand plan/apply/destroy, no always-on cluster; quotas validated"
+P6-02,P6,Kubernetes,Should,Deploy demo app on EKS (Docker + manifests),P6-01,5,"Real app healthy/faulty revision, namespace RBAC, metrics/events"
+P6-03,P6,Connector,Should,Kubernetes read-only inventory/events adapter,"P6-02,P2-02",8,Deployment unavailable/CrashLoopBackOff arrives as normalized event
+P6-04,P6,Security,Should,EKS IAM/service account boundary & adapter auth,P6-03,5,"Least privilege cluster RBAC, no static kubeconfig leaked"
+P6-05,P6,Jenkins X,Should,Run Jenkins X GitOps demo on EKS,P6-02,8,End-to-end GitOps release event linked to incident with commit SHA
+P6-06,P6,Test,Should,EKS failed rollout end-to-end and cost teardown,"P6-03,P6-05",5,Create real incident; evidence of Kubernetes event and Jenkins X release
+P7-01,P7,Image,Could,Packer hardened RHEL AMI in AWS,"P0-05,P5-08",5,"AMI immutable version, base hardening, vulnerability scan evidence"
+P7-02,P7,Automation,Could,Ansible config runner/Nomad/ELK on RHEL EC2,P7-01,5,"Idempotent playbook, no plaintext secret, rerun without drift"
+P7-03,P7,Nomad,Could,Nomad server/client cluster lab on AWS EC2,P7-02,8,"Nomad sample job scheduled, failure/recovery captured, teardown"
+P7-04,P7,Connector,Could,Nomad allocation/deploy adapter,P7-03,5,Failed allocation emits verified canonical signal linked to resource
+P7-05,P7,Jenkins,Could,Jenkins controller/runner lab on EC2,P7-02,5,Pipeline builds/scans/deploys lab workload with secrets masked
+P7-06,P7,GitLab CI,Could,"GitLab CI runner hosted on AWS, pipeline demo",P7-02,5,Real pipeline checks build/test; event correlated by SHA
+P7-07,P7,SCM,Could,Connect GitLab + Bitbucket + GitHub repositories,"P7-05,P7-06",5,"Verified webhook, repo/commit/run mapping; no untrusted actions"
+P7-08,P7,OpenShift,Could,Provision OpenShift/ROSA on AWS with cost approval,"P0-05,P6-06",8,Support/quotas/budget checked; real OpenShift cluster reachable; destroyed after lab
+P7-09,P7,Connector,Could,OpenShift deployment/event/metric adapter,P7-08,8,Real OpenShift rollout failure creates correctly linked incident
+P7-10,P7,ELK,Could,Connect Nomad/OpenShift/EKS lab logs to ELK,"P5-03,P7-04,P7-09",5,Search same failure request ID across sources; retention capped
+P7-11,P7,Integration,Could,One multi-platform incident comparison dashboard,"P7-04,P7-07,P7-09",5,Same UI schema for ECS/EKS/OpenShift/Nomad; provider specific labels
+P7-12,P7,Quality,Could,"Final portfolio demonstrations, ADRs, cost report, teardown","P7-10,P7-11",5,"Video/script/scenarios, measured cost, reproducible apply and destroy"

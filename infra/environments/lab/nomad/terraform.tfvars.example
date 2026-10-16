@@ -1,0 +1,6 @@
+aws_region = "us-east-1"
+enable_nomad_lab = false
+owner_tag = "REPLACE_WITH_OWNER"
+# Set a reviewed future RFC3339 expiry only when this lab is implemented.
+# lab_expires_at = "2026-10-16T12:00:00Z"
+lab_max_runtime_hours = 4

@@ -1,0 +1,6 @@
+[extend]
+useDefault = true
+
+[[allowlists]]
+description = "Installed dependencies, generated builds and local tool/report caches"
+paths = ['''(^|[\\/])(node_modules|\.venv|\.next|\.terraform|\.tools|artifacts)[\\/]''']

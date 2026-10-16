@@ -1,0 +1,10 @@
+{
+  "compilerOptions": {
+    "target": "ES2017",
+    "module": "esnext",
+    "strict": true,
+    "noEmit": true,
+    "types": []
+  },
+  "include": ["types/**/*.d.ts"]
+}

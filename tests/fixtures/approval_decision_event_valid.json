@@ -1,0 +1,12 @@
+{
+  "schema_version": "1.1",
+  "event_id": "approval-event-0001",
+  "approval_id": "approval-0001",
+  "action_id": "action-0001",
+  "requester_id": "operator-example",
+  "actor_id": "approver-example",
+  "decision": "APPROVE",
+  "decided_at": "2026-10-16T08:00:00Z",
+  "policy_version": "2026-10-15-1",
+  "expected_version": 1
+}

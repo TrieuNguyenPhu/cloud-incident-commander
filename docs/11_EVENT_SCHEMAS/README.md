@@ -1,0 +1,9 @@
+# Canonical Event Contracts v1.1
+
+Schemas use JSON Schema Draft 2020-12, ID is an **example logical schema URL** not a public endpoint. Validate at ingestion and in CI. Fields are snake_case; UTC timestamps in ISO 8601. Treat logs/webhook bodies as untrusted. `resource_uid` canonical, tenant-scoped hash downstream. `occurred_at` is source time and nullable only when source cannot supply it; then `missing_occurred_at=true`, and backend must use received time for ordering explicitly. `ingested_at` is assigned by CIC; do not trust the producer's value. `event_id` is event producer stable ID; for providers lacking one, derive stable digest from delivery/run identifier. EventBridge AWS native alarm envelope is NOT the same as canonical SignalEvent.
+
+Input fixtures are **synthetic example values**, not account IDs from the user. EventBridge custom bus uses source-specific rules and transforms after signature verification. CI should run `jsonschema` validation for all `fixtures/*valid*`, and negative fixtures for unsupported version, stale signature/delivery, malformed URL, wrong resource, conflicting tenant, replay and excessive payload.
+
+ApprovalDecisionEvent is an **internal** event emitted after a successful authorized conditional state transition, not an unauthenticated webhook message. AIAnalysisReport is validated again by deterministic policy; model output is never executable.
+
+`fixtures/ai_analysis_report_valid.json` is the normative architecture example: hypotheses are strings, confidence/citations apply to the report, and `recommended_action` is one rollback object or null. Backend assigns report IDs and records the actual model/prompt version as Analysis metadata. Policy validation requires citations from the incident evidence manifest and a null action for INCONCLUSIVE/FAILED; structural schema validation alone does not prove those rules.

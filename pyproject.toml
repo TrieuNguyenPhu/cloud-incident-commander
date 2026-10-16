@@ -1,0 +1,48 @@
+[project]
+name = "cic-workspace"
+version = "0.1.0"
+requires-python = ">=3.12,<3.13"
+dependencies = ["cic-api"]
+
+[tool.uv]
+package = false
+
+[tool.uv.workspace]
+members = ["services/api", "packages/contracts"]
+
+[tool.uv.sources]
+cic-api = { workspace = true }
+
+[dependency-groups]
+dev = [
+  "datamodel-code-generator==0.84.0",
+  "httpx==0.28.1",
+  "jsonschema[format]==4.26.0",
+  "mypy==2.4.0",
+  "openapi-spec-validator==0.9.0",
+  "pip-audit==2.10.1",
+  "pytest==9.1.1",
+  "pytest-cov>=6,<8",
+  "pyyaml==6.0.3",
+  "ruff==0.17.1",
+  "types-PyYAML",
+  "types-jsonschema",
+]
+
+[tool.ruff]
+target-version = "py312"
+line-length = 100
+extend-exclude = ["docs", "packages/contracts/src/cic_contracts/generated"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+plugins = ["pydantic.mypy"]
+files = ["services/api/src", "packages/contracts/src", "scripts"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra --strict-markers --cov=cic_api --cov-report=term-missing --cov-fail-under=80"

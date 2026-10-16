@@ -1,0 +1,91 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cic.example/schemas/SignalEvent.schema.json",
+  "title": "SignalEvent",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": "1.1"
+    },
+    "event_id": {
+      "type": "string",
+      "minLength": 8
+    },
+    "tenant_id": {
+      "type": "string"
+    },
+    "source": {
+      "type": "string",
+      "enum": [
+        "aws.cloudwatch",
+        "aws.ecs",
+        "github.actions",
+        "kubernetes",
+        "openshift",
+        "nomad",
+        "jenkins",
+        "gitlab",
+        "bitbucket",
+        "aws.guardduty"
+      ]
+    },
+    "source_type": {
+      "type": "string"
+    },
+    "resource_uid": {
+      "type": "string"
+    },
+    "normalized_alert_key": {
+      "type": "string"
+    },
+    "occurred_at": {
+      "anyOf": [
+        {
+          "type": "string",
+          "format": "date-time"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "ingested_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "correlation_id": {
+      "type": "string"
+    },
+    "payload_ref": {
+      "type": "string"
+    },
+    "severity": {
+      "type": "string",
+      "enum": [
+        "SEV1",
+        "SEV2",
+        "SEV3",
+        "SEV4"
+      ]
+    },
+    "missing_occurred_at": {
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "schema_version",
+    "event_id",
+    "tenant_id",
+    "source",
+    "source_type",
+    "resource_uid",
+    "normalized_alert_key",
+    "occurred_at",
+    "ingested_at",
+    "correlation_id",
+    "payload_ref",
+    "severity",
+    "missing_occurred_at"
+  ]
+}

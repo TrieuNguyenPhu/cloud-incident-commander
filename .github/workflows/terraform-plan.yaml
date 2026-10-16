@@ -1,0 +1,59 @@
+name: Reviewed Terraform plan
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  plan-core:
+    if: github.ref == 'refs/heads/main'
+    environment: aws-plan
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      AWS_REGION: us-east-1
+      AWS_ACCOUNT_ID: ${{ vars.AWS_ACCOUNT_ID }}
+      AWS_PLAN_ROLE_ARN: ${{ vars.AWS_PLAN_ROLE_ARN }}
+      TF_STATE_BUCKET: ${{ vars.TF_STATE_BUCKET }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Require reviewed environment configuration
+        run: |
+          [[ "$AWS_ACCOUNT_ID" =~ ^[0-9]{12}$ ]]
+          [[ "$AWS_PLAN_ROLE_ARN" == "arn:aws:iam::${AWS_ACCOUNT_ID}:role/"* ]]
+          test -n "$TF_STATE_BUCKET"
+      - uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd # v6.3.0
+        with:
+          role-to-assume: ${{ env.AWS_PLAN_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+          mask-aws-account-id: true
+      - name: Verify AWS account and region before planning
+        run: |
+          test "$(aws sts get-caller-identity --query Account --output text)" = "$AWS_ACCOUNT_ID"
+          test "$AWS_REGION" = "us-east-1"
+      - uses: hashicorp/setup-terraform@dfe3c3f87815947d99a8997f908cb6525fc44e9e # v4.0.1
+        with:
+          terraform_version: "1.15.5"
+          terraform_wrapper: false
+      - name: Plan only the isolated dev/core state
+        working-directory: infra/environments/dev/core
+        run: |
+          terraform init -input=false -lockfile=readonly -backend-config="bucket=$TF_STATE_BUCKET" -backend-config="key=cic/dev/core.tfstate" -backend-config="region=$AWS_REGION" -backend-config="encrypt=true" -backend-config="use_lockfile=true"
+          terraform plan -input=false -out=reviewed.tfplan
+          terraform show -no-color reviewed.tfplan > reviewed-plan.txt
+          sha256sum reviewed.tfplan > reviewed-plan.sha256
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: dev-core-plan
+          path: |
+            infra/environments/dev/core/reviewed.tfplan
+            infra/environments/dev/core/reviewed-plan.txt
+            infra/environments/dev/core/reviewed-plan.sha256
+          retention-days: 3

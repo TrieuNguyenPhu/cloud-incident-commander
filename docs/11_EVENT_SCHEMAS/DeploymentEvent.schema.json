@@ -1,0 +1,76 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cic.example/schemas/DeploymentEvent.schema.json",
+  "title": "DeploymentEvent",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": "1.1"
+    },
+    "event_id": {
+      "type": "string"
+    },
+    "tenant_id": {
+      "type": "string"
+    },
+    "resource_uid": {
+      "type": "string"
+    },
+    "occurred_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "ingested_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "source": {
+      "const": "github.actions"
+    },
+    "commit_sha": {
+      "type": "string",
+      "pattern": "^[0-9a-fA-F]{40}$"
+    },
+    "image_digest": {
+      "type": "string",
+      "pattern": "^sha256:[0-9a-fA-F]{64}$"
+    },
+    "task_definition_arn": {
+      "type": "string"
+    },
+    "pipeline_run_id": {
+      "type": "string"
+    },
+    "pipeline_run_url": {
+      "type": "string",
+      "format": "uri"
+    },
+    "deployment_status": {
+      "type": "string",
+      "enum": [
+        "STARTED",
+        "SUCCEEDED",
+        "FAILED"
+      ]
+    },
+    "correlation_id": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "schema_version",
+    "event_id",
+    "tenant_id",
+    "resource_uid",
+    "occurred_at",
+    "ingested_at",
+    "source",
+    "commit_sha",
+    "image_digest",
+    "task_definition_arn",
+    "pipeline_run_id",
+    "deployment_status",
+    "correlation_id"
+  ]
+}

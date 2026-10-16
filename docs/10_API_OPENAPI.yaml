@@ -1,0 +1,1237 @@
+openapi: 3.0.3
+info:
+  title: Cloud Incident Commander API
+  version: 1.1.0
+  description: Proposed API contract for P0 implementation. Responses and security semantics are requirements, not deployed
+    code.
+servers:
+- url: https://{apiHost}
+  variables:
+    apiHost:
+      default: example.execute-api.us-east-1.amazonaws.com
+tags:
+- name: Public
+- name: Viewer
+- name: Operator
+- name: Approver
+- name: Admin
+- name: ProviderWebhook
+paths:
+  /healthz:
+    get:
+      operationId: get_health
+      summary: get health
+      tags:
+      - Public
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Health'
+        '400': &id001
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401': &id002
+          description: Unauthenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403': &id003
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404': &id004
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409': &id005
+          description: State/etag conflict
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '429': &id006
+          description: Rate limit exceeded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500': &id007
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      x-required-role: Public
+  /v1/incidents:
+    get:
+      operationId: list_incidents
+      summary: list incidents
+      tags:
+      - Viewer
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PagedIncident'
+        '400': *id001
+        '401': *id002
+        '403': *id003
+        '404': *id004
+        '409': *id005
+        '429': *id006
+        '500': *id007
+      parameters:
+      - &id010
+        name: cursor
+        in: query
+        required: false
+        schema: &id008
+          type: string
+      - &id011
+        name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 25
+      - name: status
+        in: query
+        required: false
+        schema:
+          type: string
+          enum:
+          - NEW
+          - ACKNOWLEDGED
+          - INVESTIGATING
+          - MITIGATING
+          - RESOLVED
+          - CLOSED
+      - name: severity
+        in: query
+        required: false
+        schema:
+          type: string
+          enum:
+          - SEV1
+          - SEV2
+          - SEV3
+          - SEV4
+      - name: resource_uid
+        in: query
+        required: false
+        schema: *id008
+      - name: incident_id
+        in: query
+        required: false
+        schema: *id008
+      security:
+      - CognitoJWT: []
+      x-required-role: Viewer
+  /v1/incidents/{incident_id}:
+    get:
+      operationId: get_incident
+      summary: get incident
+      tags:
+      - Viewer
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Incident'
+        '400': *id001
+        '401': *id002
+        '403': *id003
+        '404': *id004
+        '409': *id005
+        '429': *id006
+        '500': *id007
+      parameters:
+      - &id009
+        name: incident_id
+        in: path
+        required: true
+        schema: &id012
+          type: string
+          minLength: 8
+          maxLength: 128
+      security:
+      - CognitoJWT: []
+      x-required-role: Viewer
+  /v1/incidents/{incident_id}/timeline:
+    get:
+      operationId: list_incident_timeline
+      summary: list incident timeline
+      tags:
+      - Viewer
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PagedTimelineEntry'
+        '400': *id001
+        '401': *id002
+        '403': *id003
+        '404': *id004
+        '409': *id005
+        '429': *id006
+        '500': *id007
+      parameters:
+      - *id009
+      - *id010
+      - *id011
+      security:
+      - CognitoJWT: []
+      x-required-role: Viewer
+  /v1/incidents/{incident_id}/evidence:
+    get:
+      operationId: list_incident_evidence
+      summary: list incident evidence
+      tags:
+      - Viewer
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PagedEvidence'
+        '400': *id001
+        '401': *id002
+        '403': *id003
+        '404': *id004
+        '409': *id005
+        '429': *id006
+        '500': *id007
+      parameters:
+      - *id009
+      - *id010
+      - *id011
+      security:
+      - CognitoJWT: []
+      x-required-role: Viewer
+  /v1/incidents/{incident_id}/ack:
+    post:
+      operationId: ack_incident
+      summary: ack incident
+      tags:
+      - Operator
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Incident'
+        '400': *id001
+        '401': *id002
+        '403': *id003
+        '404': *id004
+        '409': *id005
+        '429': *id006
+        '500': *id007
+      parameters:
+      - *id009
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/IncidentAck'
+      security:
+      - CognitoJWT: []
+      x-required-role: Operator
+  /v1/incidents/{incident_id}/transition:
+    post:
+      operationId: transition_incident
+      summary: transition incident
+      tags:
+      - Operator
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Incident'
+        '400': *id001
+        '401': *id002
+        '403': *id003
+        '404': *id004
+        '409': *id005
+        '429': *id006
+        '500': *id007
+      parameters:
+      - *id009
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/IncidentTransition'
+      security:
+      - CognitoJWT: []
+      x-required-role: Operator
+  /v1/incidents/{incident_id}/investigations:
+    post:
+      operationId: create_investigation
+      summary: create investigation
+      tags:
+      - Operator
+      responses:
+        '202':
+          description: Accepted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AsyncAccepted'
+        '400': *id001
+        '401': *id002
+        '403': *id003
+        '404': *id004
+        '409': *id005
+        '429': *id006
+        '500': *id007
+      parameters:
+      - *id009
+      security:
+      - CognitoJWT: []
+      x-required-role: Operator
+  /v1/incidents/{incident_id}/analyses:
+    get:
+      operationId: list_incident_analyses
+      summary: list incident analyses
+      tags:
+      - Viewer
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PagedAnalysis'
+        '400': *id001
+        '401': *id002
+        '403': *id003
+        '404': *id004
+        '409': *id005
+        '429': *id006
+        '500': *id007
+      parameters:
+      - *id009
+      security:
+      - CognitoJWT: []
+      x-required-role: Viewer
+  /v1/incidents/{incident_id}/actions:
+    post:
+      operationId: propose_action
+      summary: propose action
+      tags:
+      - Operator
+      responses:
+        '202':
+          description: Accepted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ActionAccepted'
+        '400': *id001
+        '401': *id002
+        '403': *id003
+        '404': *id004
+        '409': *id005
+        '429': *id006
+        '500': *id007
+      parameters:
+      - *id009
+      - name: Idempotency-Key
+        in: header
+        required: true
+        schema:
+          type: string
+          minLength: 12
+          maxLength: 128
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ActionRequest'
+      security:
+      - CognitoJWT: []
+      x-required-role: Operator
+  /v1/approvals:
+    get:
+      operationId: list_approvals
+      summary: list approvals
+      tags:
+      - Approver
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PagedApproval'
+        '400': *id001
+        '401': *id002
+        '403': *id003
+        '404': *id004
+        '409': *id005
+        '429': *id006
+        '500': *id007
+      parameters:
+      - *id010
+      - *id011
+      - name: status
+        in: query
+        required: false
+        schema:
+          type: string
+          enum:
+          - PENDING
+          - APPROVED
+          - REJECTED
+          - EXPIRED
+      security:
+      - CognitoJWT: []
+      x-required-role: Approver
+  /v1/approvals/{approval_id}/decision:
+    post:
+      operationId: decide_approval
+      summary: decide approval
+      tags:
+      - Approver
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Approval'
+        '400': *id001
+        '401': *id002
+        '403': *id003
+        '404': *id004
+        '409': *id005
+        '429': *id006
+        '500': *id007
+      parameters:
+      - name: approval_id
+        in: path
+        required: true
+        schema: *id012
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ApprovalDecision'
+      security:
+      - CognitoJWT: []
+      x-required-role: Approver
+  /v1/actions/{action_id}:
+    get:
+      operationId: get_action
+      summary: get action
+      tags:
+      - Viewer
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Action'
+        '400': *id001
+        '401': *id002
+        '403': *id003
+        '404': *id004
+        '409': *id005
+        '429': *id006
+        '500': *id007
+      parameters:
+      - name: action_id
+        in: path
+        required: true
+        schema: *id012
+      security:
+      - CognitoJWT: []
+      x-required-role: Viewer
+  /v1/resources:
+    get:
+      operationId: list_resources
+      summary: list resources
+      tags:
+      - Viewer
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PagedResource'
+        '400': *id001
+        '401': *id002
+        '403': *id003
+        '404': *id004
+        '409': *id005
+        '429': *id006
+        '500': *id007
+      parameters:
+      - *id010
+      - *id011
+      - name: platform
+        in: query
+        required: false
+        schema: *id008
+      - name: region
+        in: query
+        required: false
+        schema: *id008
+      security:
+      - CognitoJWT: []
+      x-required-role: Viewer
+  /v1/resources/{resource_id}/deployments:
+    get:
+      operationId: list_resource_deployments
+      summary: list resource deployments
+      tags:
+      - Viewer
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PagedDeployment'
+        '400': *id001
+        '401': *id002
+        '403': *id003
+        '404': *id004
+        '409': *id005
+        '429': *id006
+        '500': *id007
+      parameters:
+      - &id013
+        name: resource_id
+        in: path
+        required: true
+        schema: *id008
+        description: Opaque tenant-scoped resource identifier (URL-safe hash/ID), not raw ECS ARN including /.
+      - *id010
+      - *id011
+      security:
+      - CognitoJWT: []
+      x-required-role: Viewer
+  /v1/postmortems/{incident_id}/generate:
+    post:
+      operationId: generate_postmortem
+      summary: generate postmortem
+      tags:
+      - Operator
+      responses:
+        '202':
+          description: Accepted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AsyncAccepted'
+        '400': *id001
+        '401': *id002
+        '403': *id003
+        '404': *id004
+        '409': *id005
+        '429': *id006
+        '500': *id007
+      parameters:
+      - *id009
+      security:
+      - CognitoJWT: []
+      x-required-role: Operator
+  /v1/audit:
+    get:
+      operationId: list_audit
+      summary: list audit
+      tags:
+      - Admin
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PagedAuditEntry'
+        '400': *id001
+        '401': *id002
+        '403': *id003
+        '404': *id004
+        '409': *id005
+        '429': *id006
+        '500': *id007
+      parameters:
+      - *id010
+      - *id011
+      - name: from
+        in: query
+        required: false
+        schema: *id008
+      - name: to
+        in: query
+        required: false
+        schema: *id008
+      security:
+      - CognitoJWT: []
+      x-required-role: Admin
+  /webhooks/{connector_id}:
+    post:
+      operationId: receive_webhook
+      summary: receive webhook
+      tags:
+      - ProviderWebhook
+      responses:
+        '202':
+          description: Accepted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WebhookAccepted'
+        '400': *id001
+        '401': *id002
+        '403': *id003
+        '404': *id004
+        '409': *id005
+        '429': *id006
+        '500': *id007
+      parameters:
+      - name: connector_id
+        in: path
+        required: true
+        schema: *id008
+      description: Provider-specific HMAC/signature header and replay check REQUIRED in ingress Lambda; no Cognito JWT. Raw
+        body verified BEFORE JSON decoding; requests that fail signature MUST be rejected.
+      x-required-role: ProviderWebhook
+  /v1/resources/{resource_id}:
+    get:
+      operationId: get_resource
+      summary: Get tenant-authorized resource
+      tags:
+      - Viewer
+      parameters:
+      - *id013
+      security: &id014
+      - CognitoJWT: []
+      x-required-role: Viewer
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Resource'
+        '400': *id001
+        '401': *id002
+        '403': *id003
+        '404': *id004
+        '409': *id005
+        '429': *id006
+        '500': *id007
+  /v1/evidence/{evidence_id}/access:
+    post:
+      operationId: issue_evidence_access
+      summary: Authorize and issue short-lived evidence presigned GET URL
+      tags:
+      - Viewer
+      description: Authorization must verify incident evidence belongs to caller tenant and resource scope. URL expires in
+        ≤60 seconds. Never log or store presigned URL. EXPIRED returns 410.
+      parameters:
+      - name: evidence_id
+        in: path
+        required: true
+        schema:
+          type: string
+          minLength: 8
+      security: *id014
+      x-required-role: Viewer
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EvidenceAccess'
+        '400': *id001
+        '401': *id002
+        '403': *id003
+        '404': *id004
+        '409': *id005
+        '429': *id006
+        '500': *id007
+        '410':
+          description: Evidence expired
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /v1/postmortems/{incident_id}:
+    get:
+      operationId: get_postmortem
+      summary: Get latest postmortem report metadata
+      tags:
+      - Viewer
+      parameters:
+      - *id009
+      security: *id014
+      x-required-role: Viewer
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Postmortem'
+        '400': *id001
+        '401': *id002
+        '403': *id003
+        '404': *id004
+        '409': *id005
+        '429': *id006
+        '500': *id007
+components:
+  securitySchemes:
+    CognitoJWT:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Validated via API Gateway HTTP API JWT authorizer and domain RBAC resource scope.
+  schemas:
+    Error:
+      type: object
+      properties:
+        code: *id008
+        message: *id008
+        correlation_id: *id008
+        details:
+          type: object
+          additionalProperties: true
+      required:
+      - code
+      - message
+      - correlation_id
+      additionalProperties: false
+    Health:
+      type: object
+      properties:
+        status:
+          type: string
+          enum:
+          - ok
+          - degraded
+        version: *id008
+      required:
+      - status
+      - version
+      additionalProperties: false
+    Incident:
+      type: object
+      properties:
+        incident_id: *id012
+        tenant_id: *id008
+        resource_uid: *id008
+        status:
+          type: string
+          enum:
+          - NEW
+          - ACKNOWLEDGED
+          - INVESTIGATING
+          - MITIGATING
+          - RESOLVED
+          - CLOSED
+        severity:
+          type: string
+          enum:
+          - SEV1
+          - SEV2
+          - SEV3
+          - SEV4
+        title: *id008
+        version:
+          type: integer
+          minimum: 1
+        created_at: &id015
+          type: string
+          format: date-time
+        updated_at: *id015
+        latest_deployment_id: *id008
+      required:
+      - incident_id
+      - tenant_id
+      - resource_uid
+      - status
+      - severity
+      - version
+      - created_at
+      - updated_at
+      additionalProperties: false
+    TimelineEntry:
+      type: object
+      properties:
+        event_id: *id012
+        incident_id: *id012
+        event_type: *id008
+        actor_id: *id008
+        occurred_at: *id015
+        ingested_at: *id015
+        summary: *id008
+      required:
+      - event_id
+      - incident_id
+      - event_type
+      - ingested_at
+      additionalProperties: false
+    Evidence:
+      type: object
+      properties:
+        evidence_id: *id012
+        incident_id: *id012
+        evidence_type: *id008
+        collection_status:
+          type: string
+          enum:
+          - PENDING
+          - COLLECTED
+          - PARTIAL
+          - FAILED
+          - EXPIRED
+        sha256: *id008
+        byte_size:
+          type: integer
+          minimum: 0
+        occurred_at: *id015
+        created_at: *id015
+      required:
+      - evidence_id
+      - incident_id
+      - evidence_type
+      - collection_status
+      additionalProperties: false
+    Analysis:
+      type: object
+      properties:
+        analysis_id: *id012
+        incident_id: *id012
+        status:
+          type: string
+          enum:
+          - QUEUED
+          - RUNNING
+          - COMPLETE
+          - INCONCLUSIVE
+          - FAILED
+        confidence:
+          type: string
+          enum:
+          - LOW
+          - MEDIUM
+          - HIGH
+        evidence_ids:
+          type: array
+          items: *id008
+        summary: *id008
+        hypotheses:
+          type: array
+          items: *id008
+        model_id: *id008
+      required:
+      - analysis_id
+      - incident_id
+      - status
+      additionalProperties: false
+    Resource:
+      type: object
+      properties:
+        resource_uid: *id008
+        tenant_id: *id008
+        platform: *id008
+        region: *id008
+        name: *id008
+        environment: *id008
+        allowed_actions:
+          type: array
+          items: *id008
+        last_seen_at: *id015
+      required:
+      - resource_uid
+      - tenant_id
+      - platform
+      additionalProperties: false
+    Deployment:
+      type: object
+      properties:
+        deployment_id: *id012
+        resource_uid: *id008
+        commit_sha: *id008
+        image_digest: *id008
+        task_definition_arn: *id008
+        pipeline_run_url: *id008
+        occurred_at: *id015
+        status: *id008
+      required:
+      - deployment_id
+      - resource_uid
+      - occurred_at
+      additionalProperties: false
+    ActionRequest:
+      type: object
+      properties:
+        action_type:
+          type: string
+          enum:
+          - ecs.rollback_task_definition
+        resource_uid: *id008
+        target_revision: *id008
+        expected_current_revision: *id008
+        reason: *id008
+        incident_version:
+          type: integer
+          minimum: 1
+      required:
+      - action_type
+      - resource_uid
+      - target_revision
+      - expected_current_revision
+      - reason
+      - incident_version
+      additionalProperties: false
+    Action:
+      type: object
+      properties:
+        action_id: *id012
+        incident_id: *id012
+        approval_id: *id012
+        resource_uid: *id008
+        status:
+          type: string
+          enum:
+          - PENDING_APPROVAL
+          - APPROVED
+          - REJECTED
+          - RUNNING
+          - SUCCEEDED
+          - FAILED
+          - EXPIRED
+          - PRECONDITION_FAILED
+          - VERIFICATION_UNKNOWN
+        verification_status:
+          type: string
+          enum:
+          - VERIFIED
+          - FAILED
+          - UNKNOWN
+        created_at: *id015
+        completed_at: *id015
+      required:
+      - action_id
+      - incident_id
+      - resource_uid
+      - status
+      additionalProperties: false
+    Approval:
+      type: object
+      properties:
+        approval_id: *id012
+        action_id: *id012
+        incident_id: *id012
+        status:
+          type: string
+          enum:
+          - PENDING
+          - APPROVED
+          - REJECTED
+          - EXPIRED
+        requester_id: *id008
+        approver_id: *id008
+        expires_at: *id015
+        version:
+          type: integer
+          minimum: 1
+      required:
+      - approval_id
+      - action_id
+      - incident_id
+      - status
+      - requester_id
+      - expires_at
+      - version
+      additionalProperties: false
+    ApprovalDecision:
+      type: object
+      properties:
+        decision:
+          type: string
+          enum:
+          - APPROVE
+          - REJECT
+        reason: *id008
+        expected_version:
+          type: integer
+          minimum: 1
+      required:
+      - decision
+      - reason
+      - expected_version
+      additionalProperties: false
+    IncidentAck:
+      type: object
+      properties:
+        expected_version:
+          type: integer
+          minimum: 1
+      required:
+      - expected_version
+      additionalProperties: false
+    IncidentTransition:
+      type: object
+      properties:
+        to_status:
+          type: string
+          enum:
+          - ACKNOWLEDGED
+          - INVESTIGATING
+          - MITIGATING
+          - RESOLVED
+          - CLOSED
+        reason: *id008
+        expected_version:
+          type: integer
+          minimum: 1
+      required:
+      - to_status
+      - reason
+      - expected_version
+      additionalProperties: false
+    AsyncAccepted:
+      type: object
+      properties:
+        request_id: *id012
+        status:
+          type: string
+          enum:
+          - QUEUED
+        correlation_id: *id008
+      required:
+      - request_id
+      - status
+      additionalProperties: false
+    ActionAccepted:
+      type: object
+      properties:
+        action_id: *id012
+        approval_id: *id012
+        status:
+          type: string
+          enum:
+          - PENDING_APPROVAL
+      required:
+      - action_id
+      - approval_id
+      - status
+      additionalProperties: false
+    Postmortem:
+      type: object
+      properties:
+        incident_id: *id012
+        version:
+          type: integer
+          minimum: 1
+        status:
+          type: string
+          enum:
+          - DRAFT
+          - REVIEWED
+        report_s3_key: *id008
+        generated_at: *id015
+      required:
+      - incident_id
+      - version
+      - status
+      additionalProperties: false
+    AuditEntry:
+      type: object
+      properties:
+        audit_id: *id012
+        actor_id: *id008
+        action: *id008
+        outcome: *id008
+        created_at: *id015
+        correlation_id: *id008
+      required:
+      - audit_id
+      - action
+      - outcome
+      - created_at
+      additionalProperties: false
+    WebhookAccepted:
+      type: object
+      properties:
+        event_id: *id012
+        status:
+          type: string
+          enum:
+          - ACCEPTED
+          - DUPLICATE
+      required:
+      - event_id
+      - status
+      additionalProperties: false
+    PagedIncident:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Incident'
+        next_cursor:
+          type: string
+          nullable: true
+      required:
+      - items
+      additionalProperties: false
+    PagedTimelineEntry:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/TimelineEntry'
+        next_cursor:
+          type: string
+          nullable: true
+      required:
+      - items
+      additionalProperties: false
+    PagedEvidence:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Evidence'
+        next_cursor:
+          type: string
+          nullable: true
+      required:
+      - items
+      additionalProperties: false
+    PagedAnalysis:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Analysis'
+        next_cursor:
+          type: string
+          nullable: true
+      required:
+      - items
+      additionalProperties: false
+    PagedResource:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Resource'
+        next_cursor:
+          type: string
+          nullable: true
+      required:
+      - items
+      additionalProperties: false
+    PagedDeployment:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Deployment'
+        next_cursor:
+          type: string
+          nullable: true
+      required:
+      - items
+      additionalProperties: false
+    PagedAction:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Action'
+        next_cursor:
+          type: string
+          nullable: true
+      required:
+      - items
+      additionalProperties: false
+    PagedApproval:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Approval'
+        next_cursor:
+          type: string
+          nullable: true
+      required:
+      - items
+      additionalProperties: false
+    PagedAuditEntry:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/AuditEntry'
+        next_cursor:
+          type: string
+          nullable: true
+      required:
+      - items
+      additionalProperties: false
+    EvidenceAccess:
+      type: object
+      properties:
+        evidence_id:
+          type: string
+        url:
+          type: string
+          format: uri
+        expires_at:
+          type: string
+          format: date-time
+      required:
+      - evidence_id
+      - url
+      - expires_at
+      additionalProperties: false

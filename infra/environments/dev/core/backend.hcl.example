@@ -1,0 +1,5 @@
+bucket       = "REPLACE_WITH_REVIEWED_STATE_BUCKET"
+key          = "cic/dev/core.tfstate"
+region       = "us-east-1"
+encrypt      = true
+use_lockfile = true

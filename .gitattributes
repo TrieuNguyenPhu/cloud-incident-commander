@@ -1,0 +1,6 @@
+* text=auto eol=lf
+# Preserve the supplied manifest's byte-level hash of this legacy CSV.
+docs/legacy/05_BACKLOG_IMPORT.csv -text
+docs/legacy/** whitespace=-blank-at-eol
+*.png binary
+*.pdf binary

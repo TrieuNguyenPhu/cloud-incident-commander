@@ -1,0 +1,19 @@
+{
+  "version": "0",
+  "id": "00000000-1111-2222-3333-444444444444",
+  "detail-type": "CloudWatch Alarm State Change",
+  "source": "aws.cloudwatch",
+  "account": "111122223333",
+  "time": "2026-10-15T09:00:00Z",
+  "region": "us-east-1",
+  "resources": [
+    "arn:aws:cloudwatch:us-east-1:111122223333:alarm:cic-demo-api-http-5xx"
+  ],
+  "detail": {
+    "alarmName": "cic-demo-api-http-5xx",
+    "state": {
+      "value": "ALARM",
+      "timestamp": "2026-10-15T09:00:00Z"
+    }
+  }
+}

@@ -1,0 +1,79 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cic.example/schemas/CloudWatchAlarmEventEnvelope.schema.json",
+  "title": "CloudWatchAlarmEventEnvelope",
+  "type": "object",
+  "additionalProperties": true,
+  "properties": {
+    "version": {
+      "const": "0"
+    },
+    "id": {
+      "type": "string"
+    },
+    "detail-type": {
+      "const": "CloudWatch Alarm State Change"
+    },
+    "source": {
+      "const": "aws.cloudwatch"
+    },
+    "account": {
+      "type": "string"
+    },
+    "time": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "region": {
+      "type": "string"
+    },
+    "resources": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "detail": {
+      "type": "object",
+      "properties": {
+        "alarmName": {
+          "type": "string"
+        },
+        "state": {
+          "type": "object",
+          "properties": {
+            "value": {
+              "enum": [
+                "ALARM",
+                "OK",
+                "INSUFFICIENT_DATA"
+              ]
+            },
+            "timestamp": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          "required": [
+            "value"
+          ]
+        }
+      },
+      "required": [
+        "alarmName",
+        "state"
+      ]
+    }
+  },
+  "required": [
+    "version",
+    "id",
+    "detail-type",
+    "source",
+    "account",
+    "time",
+    "region",
+    "resources",
+    "detail"
+  ]
+}
