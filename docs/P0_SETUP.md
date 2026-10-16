@@ -4,8 +4,8 @@
 No AWS apply/destroy, deployment or issue-tracker import was run. The initial
 specification was moved from `doc/` to `docs/`; ADR-018 then changed the active
 region to `us-east-1` and the manifest was refreshed. The historical `legacy/`
-documents and ADR-016 remain available for audit. GitHub CI and branch settings
-must be checked from the published repository.
+documents and ADR-016 remain available for audit. The source is published on
+`main`; the GitHub controls and CI results are recorded below.
 
 ## Scope and story evidence
 
@@ -16,7 +16,7 @@ must be checked from the published repository.
 | P0-03 | Pydantic models from all 5 event schemas and OpenAPI; TypeScript API declarations; deterministic generator | `npm run contracts:check`, TypeScript/mypy, `tests/contract/test_contracts.py`, health response contract | Business endpoints are intentionally owned by P1..P7, not exposed as unauthenticated stubs |
 | P0-04 | Existing role matrix/threat model reviewed against scaffold; OIDC trust template and workflow restrictions tested | `tests/security/test_setup_security.py`; [IAM matrix](09_IAM_ACCESS_MATRIX.md), [threat model](16_SECURITY_THREAT_MODEL.md) | Account-specific IAM review/simulation and Cognito MFA/RBAC verification require P1/P4 work |
 | P0-05 | State bootstrap module, encrypted/versioned private S3, budget configuration, owner/tag/TTL and region guards, 6 distinct backend examples and teardown instructions | `node scripts/check-infra.mjs`: 9 roots with mocked plan tests; Checkov | Real account/role/recipient, reviewed AWS plan/cost approval, bootstrap provisioning and received budget emails remain unverified |
-| P0-06 | Windows/Linux CI, format/lint/typecheck/test/build, dependency/secret/IaC scan, immutable action refs, account-checked OIDC plan-only workflow, CODEOWNERS | Local quality/scans and workflow tests; [GitHub setup](../infra/README.md#github-oidc-and-branch-protection) | Verify published CI and branch protection; independent reviewer and protected `aws-plan` environment remain pending |
+| P0-06 | Windows/Linux CI, format/lint/typecheck/test/build, dependency/secret/IaC scan, immutable action refs, account-checked OIDC plan-only workflow, CODEOWNERS | Local quality/scans, published CI and branch/environment protection; [GitHub setup](../infra/README.md#github-oidc-and-branch-protection) | Add an independent reviewer before requiring PR approval or running a reviewed AWS plan |
 
 The original backlog and release checklists remain unchanged; no story or audit
 finding was silently marked deployed/verified. Real AWS work requires the
@@ -34,14 +34,23 @@ account/role/recipient plus a reviewed plan and explicit billable-resource appro
 | `npm audit --audit-level=high` | 0 reported vulnerabilities |
 | `uv run pip-audit --strict --no-deps --disable-pip -r artifacts/python-requirements.txt` | No known vulnerabilities in exported locked Python dependencies |
 | `uvx --from checkov==3.3.29 checkov --directory infra --framework terraform --compact --quiet` | 14 checks passed, 0 failed, 4 explicit skips documented below |
-| Gitleaks 8.30.1 `dir . --redact --no-banner` | No leaks in working tree; no Git history exists yet |
+| Gitleaks 8.30.1 `dir . --redact --no-banner` | No leaks in working tree; CI also scanned Git history |
 | Trivy 0.76.0 filesystem vulnerability scan including dev dependencies | 0 HIGH/CRITICAL findings in `package-lock.json` and `uv.lock` |
 | Real local HTTP smoke | Uvicorn `/healthz` returned HTTP 200 with `{"status":"ok","version":"0.1.0"}`; built static homepage returned HTTP 200 with expected title |
 
+The [published CI run](https://github.com/TrieuNguyenPhu/cloud-incident-commander/actions/runs/38838802330)
+passed Ubuntu and Windows quality, Terraform and security. GitHub `main`
+protection requires those four checks, linear history and resolved conversations;
+it blocks force pushes and deletion, including for admins. The `aws-plan`
+environment is restricted to `main`, requires approval and prevents self-review.
+Only the repository owner is currently a collaborator, so an independent reviewer
+must be added before AWS plan approval can work. No environment variables or OIDC
+role have been configured for that workflow.
+
 Smoke servers used temporary loopback ports 18000/13000, were stopped afterwards,
 and wrote local logs to ignored `artifacts/api-smoke.log` and `artifacts/web-smoke.log`.
-The normal development commands use 8000/3000. Linux CI, live AWS behavior,
-user authentication, domain coverage and UAT have not been executed.
+The normal development commands use 8000/3000. Live AWS behavior, user
+authentication, domain coverage and UAT have not been executed.
 
 Reproduce the additional Python audit in PowerShell:
 
